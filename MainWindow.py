@@ -271,7 +271,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.layerScroll.setSliderPosition((nPos-1)/2)
         updateZ()
         self.imageView.viewRect()
-
+        #######################################################>>>>>>>>>NEW PAST HERE<<<<<<<<###################################################
         ####COCalculator functions####
         self.plotData_btn.clicked.connect(self.ApplyChecker)
         self.resetPlot.clicked.connect(self.Reset)
