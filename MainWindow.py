@@ -181,7 +181,6 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 if self.BASEexists:
                     self.BASEroi.setState(tempBASE)
                     self.plotData_btn.setEnabled(True)
-                self.textBrowser_2.setText(mean.__str__())
                 self.roi.setState(tempState)
                 self.imv.setImage(finalArray[self.layerScroll.sliderPosition()][:, :, tempPlace].T, autoRange=False,autoLevels=False)
                 #nonNumpyMeanlst = meanlst.tolist()#meanlst.astype(type('float', (float,), {}))
@@ -276,6 +275,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.plotData_btn.clicked.connect(self.ApplyChecker)
         self.resetPlot.clicked.connect(self.Reset)
 
+
     def ApplyChecker(self, parent = None):
         check = True
         error = ""
@@ -331,6 +331,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             msgBox.setDefaultButton(QMessageBox.Ok)
             msgBox.exec_()
     def Apply(self, parent = None):
+        self.plotView.clear()
         a = []
         a_temp = []
         self.clearFocus()
@@ -451,9 +452,13 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
 
 
     #Changes the double click to set the coordinates to create an ROI
-    def mouseDoubleClickEvent(self, a0: QtGui.QMouseEvent):
-        x = a0.x()
-        y = a0.y()
-        #print(x, y)
-        self.xCoordTxt.setPlainText(((x-70)-self.spinBoxROI.value()/2).__str__())
-        self.plainTextEdit_2.setPlainText(((y-70)-self.spinBoxROI.value()/2).__str__())
+
+    def mousePressEvent(self, a0: QtGui.QMouseEvent):
+        buttons = qApp.mouseButtons()
+        if(buttons==QtCore.Qt.MidButton):
+            print("Middle Button Clicked!")
+            x = a0.x()
+            y = a0.y()
+            #print(x, y)
+            self.xCoordTxt.setPlainText(((x)-self.spinBoxROI.value()/2).__str__())
+            self.plainTextEdit_2.setPlainText(((y)-self.spinBoxROI.value()/2).__str__())

@@ -25,8 +25,6 @@ class Patient:
         #self.resids = np.array([], dtype = float)
 
     def gammaFunc(self, tau, A, alpha, beta):  # evaluates the gamma variate function.
-        if (alpha <0):
-            print("alpha is negative")
         return A* (tau ** alpha )  * np.exp(-tau / beta)
 
     def GVCurveFit(self, shift, times, data):  # uses the curvefit function to get coeffs.
