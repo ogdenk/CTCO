@@ -101,7 +101,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         #ROI creation
         #Coordinate Boxes
         self.xCoordTxt.setPlainText("200")
-        self.plainTextEdit_2.setPlainText("200")
+        self.yCoordTxt.setPlainText("200")
         #Changes ROI based on GUI inputs
         def resizeROI():
             self.roi.setSize([self.spinBoxROI.value(), self.spinBoxROI.value()])
@@ -123,12 +123,31 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 # roi.setPos(100,100)
                 self.roi.sigRegionChanged.connect(update)
                 self.roi.setPen(200, 50, 0)
-                self.roi.setPos(float(self.xCoordTxt.toPlainText()), float(self.plainTextEdit_2.toPlainText()))
-                for i in np.arange(0, nTime, 1):
-                    self.roiList.append(self.roi.saveState())
-                # Generates second image and output from ROI data
-                ROIarray = self.roi.getArrayRegion(finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T,self.imv.getImageItem())
-                np.fliplr(ROIarray)
+                coordsCorrect = True
+                try:
+                    temp = float(self.xCoordTxt.toPlainText())
+                except:
+                    coordsCorrect = False
+
+                try:
+                    temp = float(self.yCoordTxt.toPlainText())
+                except:
+                    coordsCorrect = False
+                if coordsCorrect:
+                    self.roi.setPos(float(self.xCoordTxt.toPlainText()), float(self.yCoordTxt.toPlainText()))
+                    for i in np.arange(0, nTime, 1):
+                        self.roiList.append(self.roi.saveState())
+                    # Generates second image and output from ROI data
+                    ROIarray = self.roi.getArrayRegion(finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T,self.imv.getImageItem())
+                    np.fliplr(ROIarray)
+
+                if not coordsCorrect:
+                    msgBox = QMessageBox()
+                    msgBox.setText("There was an error:")
+                    msgBox.setInformativeText("Ensure that coordinates for baseline are correct and try again.")
+                    msgBox.setStandardButtons(QMessageBox.Ok)
+                    msgBox.setDefaultButton(QMessageBox.Ok)
+                    msgBox.exec_()
 
         self.createROI_btn.clicked.connect(createROI)
         #Hides the by removing the link to the image and moving it out of frame
@@ -202,8 +221,26 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 self.BASEroi.setParentItem(self.imv.getView())
                 self.BASEroi.setPen(0, 200, 100)
                 self.BASEroi.setSize(self.spinBoxROI.value(), self.spinBoxROI.value())
-                self.BASEroi.setPos(float(self.xCoordTxt.toPlainText()), float(self.plainTextEdit_2.toPlainText()))
-                self.BASEroiSAVE = self.BASEroi.saveState()
+                coordsCorrect = True
+                try:
+                    temp = float(self.xCoordTxt.toPlainText())
+                except:
+                    coordsCorrect = False
+
+                try:
+                    temp = float(self.yCoordTxt.toPlainText())
+                except:
+                    coordsCorrect = False
+                if coordsCorrect:
+                    self.BASEroi.setPos(float(self.xCoordTxt.toPlainText()), float(self.yCoordTxt.toPlainText()))
+                    self.BASEroiSAVE = self.BASEroi.saveState()
+                if not coordsCorrect:
+                    msgBox = QMessageBox()
+                    msgBox.setText("There was an error:")
+                    msgBox.setInformativeText("Ensure that coordinates for baseline are correct and try again.")
+                    msgBox.setStandardButtons(QMessageBox.Ok)
+                    msgBox.setDefaultButton(QMessageBox.Ok)
+                    msgBox.exec_()
 
         self.baseROI_btn.clicked.connect(setBaseLine)
 
@@ -464,4 +501,4 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             y = a0.y()
             #print(x, y)
             self.xCoordTxt.setPlainText(((x-10)-self.spinBoxROI.value()/2).__str__())
-            self.plainTextEdit_2.setPlainText(((y-10)-self.spinBoxROI.value()/2).__str__())
+            self.yCoordTxt.setPlainText(((y-10)-self.spinBoxROI.value()/2).__str__())

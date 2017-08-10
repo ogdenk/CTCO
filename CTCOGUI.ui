@@ -239,7 +239,7 @@
      <string>y:</string>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="plainTextEdit_2">
+   <widget class="QPlainTextEdit" name="yCoordTxt">
     <property name="geometry">
      <rect>
       <x>160</x>
