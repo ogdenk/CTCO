@@ -265,7 +265,6 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.brightnessSlider.sliderPressed.connect(updateBottom)
         self.brightnessSlider.sliderReleased.connect(updateBottom)
 
-
         updateBottom()
         self.layerScroll.setSliderPosition((nPos-1)/2)
         updateZ()
