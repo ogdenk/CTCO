@@ -81,7 +81,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
 
         self.timeInterval.setPlainText(str(self.timeIntervalfloat))
         s = sorted(masterList, key=lambda x: (x[2]))
-        s = sorted(masterList, key=lambda x: (x[1]), reverse=True)#Sorted by position then by time (maybe)
+        s = sorted(masterList, key=lambda x: (x[1]))#Sorted by position then by time (maybe)
 
         nPos = seenPos.__len__()
         nTime = seenTime.__len__()
@@ -320,8 +320,12 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         # Final check
         #############################################
         if check == True:
-            self.Apply()
-        else:
+            try:
+                self.Apply()
+            except:
+                check = False
+                error += "An unknown error occured, please ensure all data is correct"
+        if check == False:
             # print("error box popup:\n", error
             msgBox = QMessageBox()
             msgBox.setText("There was an error:")
@@ -459,5 +463,5 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             x = a0.x()
             y = a0.y()
             #print(x, y)
-            self.xCoordTxt.setPlainText(((x)-self.spinBoxROI.value()/2).__str__())
-            self.plainTextEdit_2.setPlainText(((y)-self.spinBoxROI.value()/2).__str__())
+            self.xCoordTxt.setPlainText(((x-10)-self.spinBoxROI.value()/2).__str__())
+            self.plainTextEdit_2.setPlainText(((y-10)-self.spinBoxROI.value()/2).__str__())
