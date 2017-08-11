@@ -25,10 +25,9 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         pqg.mkPen(color=(0, 97, 255))
         self.setupUi(self)
         self.HUtoIodineConversion.setPlainText("24")
-
-
+        self.legend = False
         self.patient = PatientData.Patient()  # object that holds the data and does the calculation
-
+        self.legendExists = False
         self.setMouseTracking(True)
 
         self.imv = pqg.ImageView(parent=self.imageView)
@@ -62,7 +61,6 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         seenPos = []#List to hold possible positions
         seenTime = []#List to hold possible times
         masterList = []#List to hold data in filename, position, time format
-
         for temp in lstFilesDCM:
             dc = dicom.read_file(temp)
 
@@ -76,11 +74,13 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             else:
                 seenTime.append(dc[0x8, 0x32].value)
             masterList.append([temp, dc[0x20, 0x1041].value, dc[0x8, 0x32].value])
-
+        if seenTime.__len__()>25:
+            self.HUvalues.setRowCount(seenTime.__len__()+1)
+            self.HUvalues.setVerticalScrollBarPolicy(2)
         temptime = sorted(seenTime)
         temp1 = float(temptime[1])
         temp2 = float(temptime[0])
-        self.timeIntervalfloat = temp1- temp2
+        self.timeIntervalfloat = round(temp1- temp2,4)
 
         self.timeInterval.setPlainText(str(self.timeIntervalfloat))
         s = sorted(masterList, key=lambda x: (x[2]))
@@ -177,11 +177,27 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
 
         #Finds the mean of the data within each of the ROIs
         def collectMeans():
+            self.readyToPlot=False
             mean = 0
             meanlst = []
+            self.timeInterval.setPlainText(str(self.timeIntervalfloat))
             if self.BASEexists:
                 tempBASE = self.BASEroi.saveState()
+                if not self.ROIexists:
+                    msgBox = QMessageBox()
+                    msgBox.setText("There was an error:")
+                    msgBox.setInformativeText("Ensure that the ROI boxes are set.")
+                    msgBox.setStandardButtons(QMessageBox.Ok)
+                    msgBox.setDefaultButton(QMessageBox.Ok)
+                    msgBox.exec_()
             if self.ROIexists:
+                if not self.BASEexists:
+                    msgBox = QMessageBox()
+                    msgBox.setText("There was an error:")
+                    msgBox.setInformativeText("Ensure that the baseline ROI box is set.")
+                    msgBox.setStandardButtons(QMessageBox.Ok)
+                    msgBox.setDefaultButton(QMessageBox.Ok)
+                    msgBox.exec_()
                 update(self.roi)
                 preMove()
                 tempROI = self.roi
@@ -202,16 +218,18 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 mean = mean/nTime
                 if self.BASEexists:
                     self.BASEroi.setState(tempBASE)
-                    self.plotData_btn.setEnabled(True)
+                    self.readyToPlot = True
                 self.roi.setState(tempState)
                 self.imv.setImage(finalArray[self.layerScroll.sliderPosition()][:, :, tempPlace].T, autoRange=False,autoLevels=False)
                 #nonNumpyMeanlst = meanlst.tolist()#meanlst.astype(type('float', (float,), {}))
                 for i in range(0,meanlst.__len__()):
                     self.HUvalues.setItem(i,0,QTableWidgetItem(str(meanlst[i])))
+            if self.readyToPlot:
+                self.ApplyChecker()
 
 
 
-        self.findMean_btn.clicked.connect(collectMeans)
+        self.calcAndPlot_btn.clicked.connect(collectMeans)
 
         #Creation of Baseline ROI
         self.BASEroi = pqg.RectROI([0,0], [self.spinBoxROI.value(), self.spinBoxROI.value()])
@@ -311,7 +329,6 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.imageView.viewRect()
         #######################################################>>>>>>>>>NEW PAST HERE<<<<<<<<###################################################
         ####COCalculator functions####
-        self.plotData_btn.clicked.connect(self.ApplyChecker)
         self.resetPlot.clicked.connect(self.Reset)
         self.createCSV.clicked.connect(self.CSVcreator)
 
@@ -376,7 +393,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             msgBox.exec_()
     def CSVcreator(self,parent = None):
 
-        filename = (self.accessionNum + "_" + str(datetime.datetime.today()))
+        filename = ("csvfiles/"+self.accessionNum + "_" + str(datetime.datetime.today()))
         filename = filename.replace(" ", "_")
         filename = filename.replace(":", "-")
         filename = filename.split(".", 1)[0]
@@ -426,10 +443,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             temp = self.HUvalues.item(i, 0)
             if temp:
                 a.append(float(temp.text()))
-                a_temp.append(int(temp.text()))
         a = np.array(a)  # type float
-        a_temp = np.array(a_temp)
-        np.savetxt("a_array.txt", a_temp)
         b = float(self.baselineInput.toPlainText())
         b = float(self.baselineInput.toPlainText())
         self.patient.baseline = b
@@ -497,14 +511,23 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         # self.GraphicsView.setBackground('#0061ff')
         # self.GraphicsView.setConfigOption('foreground','#0061ff')
         self.plotView.plot(title=' ')
-        self.plotView.addLegend(size=(100, 40), offset=(0, 1))
+        self.legend = self.plotView.addLegend(size=(100, 40), offset=(0, 1))
+
+        if self.legendExists:
+            self.legend.scene().removeItem(self.legend)
+        else:
+            self.legendExists = True
+
         self.plotView.plot(self.patient.times, self.patient.data, name='Patient Data', pen=None, symbol='t',
-                               symbolPen=None, symbolSize=10, symbolBrush=(204, 63, 12, 255))
+                            symbolPen=None, symbolSize=5, symbolBrush=(204, 63, 12, 255))
         self.plotView.plot(self.patient.contTimes, self.patient.contData, name='Curve Fit',
-                               pen=mkPen('b', width=1))
+                            pen=mkPen('b', width=1))
+
         self.plotView.setLabel('left', "Enhancement (HU)")
         self.plotView.setLabel('bottom', "Time (s)")
         self.plotView.viewRect()
+
+
     def Reset(self, parent = None):
         self.HUvalues.clear()
         self.alpha.clear()
@@ -533,7 +556,6 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.patient.CO = 0
         self.plotView.clear()
         self.timeInterval.setPlainText(str(self.timeIntervalfloat))
-        self.plotData_btn.setEnabled(False)
         self.createCSV.setEnabled(False)
 
 
