@@ -548,5 +548,5 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             x = a0.x()
             y = a0.y()
             #print(x, y)
-            self.xCoordTxt.setPlainText(((x-10)-self.spinBoxROI.value()/2).__str__())
-            self.yCoordTxt.setPlainText(((y-10)-self.spinBoxROI.value()/2).__str__())
+            self.xCoordTxt.setPlainText((((x)-10)-self.spinBoxROI.value()/2).__str__())
+            self.yCoordTxt.setPlainText((((y)-10)-self.spinBoxROI.value()/2).__str__())
