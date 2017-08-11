@@ -401,7 +401,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         try:
             with open(filename, 'w') as csvfile:
                 writer = csv.writer(csvfile, delimiter=' ',
-                                        quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                                        quotechar=' ', quoting=csv.QUOTE_MINIMAL)
 
                 self.clearFocus()
                 allRows = self.HUvalues.rowCount()
@@ -411,19 +411,22 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                     if temp:
                         temp = self.HUvalues.item(i, 0).text()
                         roiValues.append(temp)
-                writer.writerow(roiValues)
-                writer.writerow(['Baseline:',self.baselineInput.toPlainText()])
-                writer.writerow(['HU/Iodine (HU/(mg/mL)):', self.HUtoIodineConversion.toPlainText()])
-                writer.writerow(['Time Interval (s):', self.timeInterval.toPlainText()])
-                writer.writerow(['Cardiac Output (L/min):', self.cardiacOutput.toPlainText()])
-                writer.writerow(['Time to peak:', self.peakTime.toPlainText()])
-                writer.writerow(['Mean Transit Time:', self.MTT.toPlainText()])
-                writer.writerow(['Area Under Curve:', self.AUC.toPlainText()])
-                writer.writerow(['Standard Error:', self.standardError.toPlainText()])
-                writer.writerow(['Alpha:', self.alpha.toPlainText()])
-                writer.writerow(['Beta:', self.beta.toPlainText()])
-                writer.writerow(['t0 (s):', self.t0.toPlainText()])
-                writer.writerow(['R Squared:', self.rsquared.toPlainText()])
+                roiValuesStr = ""
+                for item in roiValues:
+                    roiValuesStr += (str(item)+",")
+                writer.writerow(roiValuesStr)
+                writer.writerow(['Baseline:,',self.baselineInput.toPlainText()])
+                writer.writerow(['HU/Iodine (HU/(mg/mL)):,', self.HUtoIodineConversion.toPlainText()])
+                writer.writerow(['Time Interval (s):,', self.timeInterval.toPlainText()])
+                writer.writerow(['Cardiac Output (L/min):,', self.cardiacOutput.toPlainText()])
+                writer.writerow(['Time to peak:,',self.peakTime.toPlainText()])
+                writer.writerow(['Mean Transit Time:,',self.MTT.toPlainText()])
+                writer.writerow(['Area Under Curve:,',self.AUC.toPlainText()])
+                writer.writerow(['Standard Error:,',self.standardError.toPlainText()])
+                writer.writerow(['Alpha:,',self.alpha.toPlainText()])
+                writer.writerow(['Beta:,',self.beta.toPlainText()])
+                writer.writerow(['t0 (s):,',self.t0.toPlainText()])
+                writer.writerow(['R Squared:,',self.rsquared.toPlainText()])
         except:
             msgBox = QMessageBox()
             msgBox.setText("There was an error:")
