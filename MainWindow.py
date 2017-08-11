@@ -208,7 +208,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                     self.roi.setState(self.roiList[i])
                     if self.BASEexists and i == 0:
                         self.BASEroi.setState(self.BASEroiSAVE)
-                        BaseLineNum = (self.BASEroi.getArrayRegion(finalArray[self.layerScroll.sliderPosition()][:, :, 0].T, self.imv.getImageItem()).mean())#baseline
+                        BaseLineNum = round((self.BASEroi.getArrayRegion(finalArray[self.layerScroll.sliderPosition()][:, :, 0].T, self.imv.getImageItem()).mean()),4)#baseline
                         self.baselineInput.setPlainText(str(BaseLineNum))
                     else:
                         self.BASEroi.setPos(-100000,100000)
