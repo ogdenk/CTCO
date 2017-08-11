@@ -209,6 +209,10 @@ class Ui_MainWindow(object):
         self.label_tinterval = QtWidgets.QLabel(self.centralwidget)
         self.label_tinterval.setGeometry(QtCore.QRect(860, 620, 101, 20))
         self.label_tinterval.setObjectName("label_tinterval")
+        self.createCSV = QtWidgets.QPushButton(self.centralwidget)
+        self.createCSV.setEnabled(False)
+        self.createCSV.setGeometry(QtCore.QRect(1172, 690, 121, 32))
+        self.createCSV.setObjectName("createCSV")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1340, 22))
@@ -247,5 +251,6 @@ class Ui_MainWindow(object):
         self.label_HUConversion.setText(_translate("MainWindow", "HU/Iodine (HU/(mg/mL)) "))
         self.label_baseline.setText(_translate("MainWindow", "Baseline"))
         self.label_tinterval.setText(_translate("MainWindow", "Time Interval (s)"))
+        self.createCSV.setText(_translate("MainWindow", "Create a CSV"))
 
 from pyqtgraph import PlotWidget

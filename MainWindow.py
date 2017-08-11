@@ -13,6 +13,8 @@ import PatientData
 from scipy.optimize import curve_fit
 import numpy as np
 import sys
+import csv
+import datetime
 
 class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
 
@@ -23,6 +25,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         pqg.mkPen(color=(0, 97, 255))
         self.setupUi(self)
         self.HUtoIodineConversion.setPlainText("24")
+
 
         self.patient = PatientData.Patient()  # object that holds the data and does the calculation
 
@@ -55,7 +58,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         out = ""
         out += "Pixel Dimentions: " + ConstPixelDims.__str__() + '\n' + "Pixel Spacing: " + ConstPixelSpacing.__str__() + '\n'
 
-
+        self.accessionNum = dicom.read_file(lstFilesDCM[1])[0x8, 0x50].value
         seenPos = []#List to hold possible positions
         seenTime = []#List to hold possible times
         masterList = []#List to hold data in filename, position, time format
@@ -310,6 +313,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         ####COCalculator functions####
         self.plotData_btn.clicked.connect(self.ApplyChecker)
         self.resetPlot.clicked.connect(self.Reset)
+        self.createCSV.clicked.connect(self.CSVcreator)
 
 
     def ApplyChecker(self, parent = None):
@@ -370,7 +374,49 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             msgBox.setStandardButtons(QMessageBox.Ok)
             msgBox.setDefaultButton(QMessageBox.Ok)
             msgBox.exec_()
+    def CSVcreator(self,parent = None):
+
+        filename = (self.accessionNum + "_" + str(datetime.datetime.today()))
+        filename = filename.replace(" ", "_")
+        filename = filename.replace(":", "-")
+        filename = filename.split(".", 1)[0]
+        filename = filename + ".csv"
+        try:
+            with open(filename, 'w') as csvfile:
+                writer = csv.writer(csvfile, delimiter=' ',
+                                        quotechar='|', quoting=csv.QUOTE_MINIMAL)
+
+                self.clearFocus()
+                allRows = self.HUvalues.rowCount()
+                roiValues = ["ROI Values:"]
+                for i in np.arange(0, allRows + 1, 1):
+                    temp = self.HUvalues.item(i, 0)
+                    if temp:
+                        temp = self.HUvalues.item(i, 0).text()
+                        roiValues.append(temp)
+                writer.writerow(roiValues)
+                writer.writerow(['Baseline:',self.baselineInput.toPlainText()])
+                writer.writerow(['HU/Iodine (HU/(mg/mL)):', self.HUtoIodineConversion.toPlainText()])
+                writer.writerow(['Time Interval (s):', self.timeInterval.toPlainText()])
+                writer.writerow(['Cardiac Output (L/min):', self.cardiacOutput.toPlainText()])
+                writer.writerow(['Time to peak:', self.peakTime.toPlainText()])
+                writer.writerow(['Mean Transit Time:', self.MTT.toPlainText()])
+                writer.writerow(['Area Under Curve:', self.AUC.toPlainText()])
+                writer.writerow(['Standard Error:', self.standardError.toPlainText()])
+                writer.writerow(['Alpha:', self.alpha.toPlainText()])
+                writer.writerow(['Beta:', self.beta.toPlainText()])
+                writer.writerow(['t0 (s):', self.t0.toPlainText()])
+                writer.writerow(['R Squared:', self.rsquared.toPlainText()])
+        except:
+            msgBox = QMessageBox()
+            msgBox.setText("There was an error:")
+            msgBox.setInformativeText("An error occurred when trying to create a csv file")
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.setDefaultButton(QMessageBox.Ok)
+            msgBox.exec_()
+
     def Apply(self, parent = None):
+        self.createCSV.setEnabled(True)
         self.plotView.clear()
         a = []
         a_temp = []
@@ -487,6 +533,8 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.patient.CO = 0
         self.plotView.clear()
         self.timeInterval.setPlainText(str(self.timeIntervalfloat))
+        self.plotData_btn.setEnabled(False)
+        self.createCSV.setEnabled(False)
 
 
 
