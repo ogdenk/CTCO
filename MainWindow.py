@@ -86,25 +86,25 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         s = sorted(masterList, key=lambda x: (x[2]))
         s = sorted(masterList, key=lambda x: (x[1]))#Sorted by position then by time (maybe)
 
-        nPos = seenPos.__len__()
-        nTime = seenTime.__len__()
+        self.nPos = seenPos.__len__()
+        self.nTime = seenTime.__len__()
 
-        finalArray = []#List holding all Dicom arrays
-        for p in np.arange(0, nPos, 1):
+        self.finalArray = []#List holding all Dicom arrays
+        for p in np.arange(0, self.nPos, 1):
             ArrayDicom = np.zeros(ConstPixelDims, dtype=ChestCT.pixel_array.dtype)
-            for t in np.arange(0, nTime, 1):
-                fileDCM = s[t+p*nTime][0]
+            for t in np.arange(0, self.nTime, 1):
+                fileDCM = s[t+p*self.nTime][0]
                 # read the file
                 ds = dicom.read_file(fileDCM)
                 # store the raw image data
                 ArrayDicom[:, :, t] = ds.pixel_array
-            finalArray.append(ArrayDicom)
+            self.finalArray.append(ArrayDicom)
 
 
         #ROI creation
         #Coordinate Boxes
-        self.xCoordTxt.setPlainText("200")
-        self.yCoordTxt.setPlainText("200")
+        self.xCoordTxt.setPlainText("-200")
+        self.yCoordTxt.setPlainText("-200")
         #Changes ROI based on GUI inputs
         def resizeROI():
             self.roi.setSize([self.spinBoxROI.value(), self.spinBoxROI.value()])
@@ -119,41 +119,13 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         #ROI buttons
         #Creates the ROI by linking the roi to the image
         def createROI():
-            if self.ROIexists == False:
-                self.ROIexists = True
-                # Creates the ROI list
-                self.roi.setParentItem(self.imv.getView())
-                # roi.setPos(100,100)
-                self.roi.sigRegionChanged.connect(update)
-                self.roi.setPen(200, 50, 0)
-                coordsCorrect = True
-                try:
-                    temp = float(self.xCoordTxt.toPlainText())
-                except:
-                    coordsCorrect = False
-
-                try:
-                    temp = float(self.yCoordTxt.toPlainText())
-                except:
-                    coordsCorrect = False
-                if coordsCorrect:
-                    self.roi.setPos(float(self.xCoordTxt.toPlainText()), float(self.yCoordTxt.toPlainText()))
-                    for i in np.arange(0, nTime, 1):
-                        self.roiList.append(self.roi.saveState())
-                    # Generates second image and output from ROI data
-                    ROIarray = self.roi.getArrayRegion(finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T,self.imv.getImageItem())
-                    np.fliplr(ROIarray)
-
-                if not coordsCorrect:
-                    msgBox = QMessageBox()
-                    msgBox.setText("There was an error:")
-                    msgBox.setInformativeText("Ensure that coordinates for baseline are correct and try again.")
-                    msgBox.setStandardButtons(QMessageBox.Ok)
-                    msgBox.setDefaultButton(QMessageBox.Ok)
-                    msgBox.exec_()
+            QApplication.setOverrideCursor(QCursor(QtCore.Qt.CrossCursor))
+            self.createROI_btn.setDown(True)
+            self.roi.sigRegionChanged.connect(update)
 
         self.createROI_btn.clicked.connect(createROI)
-        #Hides the by removing the link to the image and moving it out of frame
+
+        #Hides the ROI by removing the link to the image and moving it out of frame
         def clearROI():
             if self.ROIexists:
                 self.roi.setParentItem(None)
@@ -161,6 +133,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 self.roi.setSize([self.spinBoxROI.value(), self.spinBoxROI.value()])
                 self.roiList.clear()
                 self.ROIexists = False
+        def clearBASE():
             if self.BASEexists:
                 self.BASEroi.setParentItem(None)
                 self.BASEroi.setPos(-10000, 0)
@@ -169,10 +142,22 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 self.BASEexists = False
 
         self.clearROI_btn.clicked.connect(clearROI)
+        self.clearBASE_btn.clicked.connect(clearBASE)
+
+        '''
+        def moveBASE():
+            if(self.BASEexists):
+                self.BASEmean.setPlainText(str(self.BASEroi.getArrayRegion(self.finalArray[self.layerScroll.sliderPosition()][:, :, 0].T, self.imv.getImageItem()).mean()))
+
+        self.BASEroi.sigRegionChanged.connect(moveBASE)
+        '''
 
         #Changes data based on moving of ROI as it happens
         def update(roi):
-            ROIarray = roi.getArrayRegion(finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T, self.imv.getImageItem())
+            ROIarray = roi.getArrayRegion(self.finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T, self.imv.getImageItem())
+            self.MPAmean.setPlainText(
+                str(self.roi.getArrayRegion(self.finalArray[self.layerScroll.sliderPosition()][:, :,
+                                            self.timeScroll.sliderPosition()].T, self.imv.getImageItem()).mean()))
             np.fliplr(ROIarray)
 
         #Finds the mean of the data within each of the ROIs
@@ -203,24 +188,24 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 tempROI = self.roi
                 tempState = tempROI.saveState()
                 tempPlace = self.timeScroll.sliderPosition()
-                for i in np.arange(0, nTime, 1):
-                    self.imv.setImage(finalArray[self.layerScroll.sliderPosition()][:, :, i].T, autoRange=False, autoLevels=False)
+                for i in np.arange(0, self.nTime, 1):
+                    self.imv.setImage(self.finalArray[self.layerScroll.sliderPosition()][:, :, i].T, autoRange=False, autoLevels=False)
                     self.roi.setState(self.roiList[i])
                     if self.BASEexists and i == 0:
                         self.BASEroi.setState(self.BASEroiSAVE)
-                        BaseLineNum = round((self.BASEroi.getArrayRegion(finalArray[self.layerScroll.sliderPosition()][:, :, 0].T, self.imv.getImageItem()).mean()),4)#baseline
+                        BaseLineNum = round((self.BASEroi.getArrayRegion(self.finalArray[self.layerScroll.sliderPosition()][:, :, 0].T, self.imv.getImageItem()).mean()),4)#baseline
                         self.baselineInput.setPlainText(str(BaseLineNum))
                     else:
                         self.BASEroi.setPos(-100000,100000)
-                    mean += self.roi.getArrayRegion(finalArray[self.layerScroll.sliderPosition()][:, :, i].T, self.imv.getImageItem()).mean()
-                    meanlst.append(int(self.roi.getArrayRegion(finalArray[self.layerScroll.sliderPosition()][:, :, i].T, self.imv.getImageItem()).mean()))
+                    mean += self.roi.getArrayRegion(self.finalArray[self.layerScroll.sliderPosition()][:, :, i].T, self.imv.getImageItem()).mean()
+                    meanlst.append(int(self.roi.getArrayRegion(self.finalArray[self.layerScroll.sliderPosition()][:, :, i].T, self.imv.getImageItem()).mean()))
                 print(meanlst)#tablevalues
-                mean = mean/nTime
+                mean = mean/self.nTime
                 if self.BASEexists:
                     self.BASEroi.setState(tempBASE)
                     self.readyToPlot = True
                 self.roi.setState(tempState)
-                self.imv.setImage(finalArray[self.layerScroll.sliderPosition()][:, :, tempPlace].T, autoRange=False,autoLevels=False)
+                self.imv.setImage(self.finalArray[self.layerScroll.sliderPosition()][:, :, tempPlace].T, autoRange=False,autoLevels=False)
                 #nonNumpyMeanlst = meanlst.tolist()#meanlst.astype(type('float', (float,), {}))
                 for i in range(0,meanlst.__len__()):
                     self.HUvalues.setItem(i,0,QTableWidgetItem(str(meanlst[i])))
@@ -237,39 +222,17 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.BASEexists = False
 
         def setBaseLine():
-            if self.BASEexists == False:
-                self.BASEexists = True
-                self.BASEroi.setParentItem(self.imv.getView())
-                self.BASEroi.setPen(0, 200, 100)
-                self.BASEroi.setSize(self.spinBoxROI.value(), self.spinBoxROI.value())
-                coordsCorrect = True
-                try:
-                    temp = float(self.xCoordTxt.toPlainText())
-                except:
-                    coordsCorrect = False
+            QApplication.setOverrideCursor(QCursor(QtCore.Qt.CrossCursor))
+            self.baseROI_btn.setDown(True)
 
-                try:
-                    temp = float(self.yCoordTxt.toPlainText())
-                except:
-                    coordsCorrect = False
-                if coordsCorrect:
-                    self.BASEroi.setPos(float(self.xCoordTxt.toPlainText()), float(self.yCoordTxt.toPlainText()))
-                    self.BASEroiSAVE = self.BASEroi.saveState()
-                if not coordsCorrect:
-                    msgBox = QMessageBox()
-                    msgBox.setText("There was an error:")
-                    msgBox.setInformativeText("Ensure that coordinates for baseline are correct and try again.")
-                    msgBox.setStandardButtons(QMessageBox.Ok)
-                    msgBox.setDefaultButton(QMessageBox.Ok)
-                    msgBox.exec_()
 
         self.baseROI_btn.clicked.connect(setBaseLine)
 
 
         #Slider for time
-        self.timeScroll.setMaximum(nTime-1)
+        self.timeScroll.setMaximum(self.nTime-1)
         def updateT():
-            self.imv.setImage(finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T, autoRange=False, autoLevels=False)
+            self.imv.setImage(self.finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T, autoRange=False, autoLevels=False)
             if self.ROIexists:
                 self.roi.setState(self.roiList[self.timeScroll.sliderPosition()])
                 update(self.roi)
@@ -292,9 +255,9 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
 
 
         #Slider for Z axis
-        self.layerScroll.setMaximum(nPos-1)
+        self.layerScroll.setMaximum(self.nPos-1)
         def updateZ():
-            self.imv.setImage(finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T, autoRange=False, autoLevels=False)
+            self.imv.setImage(self.finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T, autoRange=False, autoLevels=False)
             if self.ROIexists:
                 update(self.roi)
 
@@ -324,13 +287,21 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.brightnessSlider.sliderReleased.connect(updateBottom)
 
         updateBottom()
-        self.layerScroll.setSliderPosition((nPos-1)/2)
+        self.layerScroll.setSliderPosition((self.nPos-1)/2)
         updateZ()
         self.imageView.viewRect()
         #######################################################>>>>>>>>>NEW PAST HERE<<<<<<<<###################################################
         ####COCalculator functions####
         self.resetPlot.clicked.connect(self.Reset)
         self.createCSV.clicked.connect(self.CSVcreator)
+
+        #Tooltips
+        self.clearBASE_btn.setToolTip("Remove Baseline ROI")
+        self.clearROI_btn.setToolTip("Remove MPA ROIs")
+        self.createROI_btn.setToolTip("Create MPA ROIs at next mouse click")
+        self.baseROI_btn.setToolTip("Create Baseline ROI at next mouse click, on first time interval")
+        self.resetPlot.setToolTip("Clear plot and data used to create it")
+        self.calcAndPlot_btn.setToolTip("Create data from ROIs and plot")
 
 
     def ApplyChecker(self, parent = None):
@@ -448,7 +419,6 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 a.append(float(temp.text()))
         a = np.array(a)  # type float
         b = float(self.baselineInput.toPlainText())
-        b = float(self.baselineInput.toPlainText())
         self.patient.baseline = b
         self.patient.data = a - b
         self.patient.getCoeffs()
@@ -531,6 +501,8 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.plotView.viewRect()
 
 
+
+
     def Reset(self, parent = None):
         self.HUvalues.clear()
         self.alpha.clear()
@@ -564,14 +536,68 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
 
 
 
-    #Changes the double click to set the coordinates to create an ROI
+    #Changes the left click to set the coordinates to create an ROI
 
     def mousePressEvent(self, a0: QtGui.QMouseEvent):
         buttons = qApp.mouseButtons()
-        if(buttons==QtCore.Qt.MidButton):
-            print("Middle Button Clicked!")
+        QApplication.restoreOverrideCursor()
+        if(buttons==QtCore.Qt.LeftButton):
+            #print("Middle Button Clicked!")
             x = a0.x()
             y = a0.y()
             #print(x, y)
             self.xCoordTxt.setPlainText((((x)-10)-self.spinBoxROI.value()/2).__str__())
             self.yCoordTxt.setPlainText((((y)-10)-self.spinBoxROI.value()/2).__str__())
+            if(self.createROI_btn.isDown()):
+                if self.ROIexists == False:
+                    self.ROIexists = True
+                    # Creates the ROI list
+                    self.roi.setParentItem(self.imv.getView())
+                    # roi.setPos(100,100)
+                    self.roi.setPen(200, 50, 0)
+                    coordsCorrect = True
+                    try:
+                        temp = float(self.xCoordTxt.toPlainText())
+                    except:
+                        coordsCorrect = False
+                    if coordsCorrect:
+                        self.roi.setPos(float(self.xCoordTxt.toPlainText()), float(self.yCoordTxt.toPlainText()))
+                        for i in np.arange(0, self.nTime, 1):
+                            self.roiList.append(self.roi.saveState())
+                        # Generates second image and output from ROI data
+                        ROIarray = self.roi.getArrayRegion(self.finalArray[self.layerScroll.sliderPosition()][:, :,
+                                                           self.timeScroll.sliderPosition()].T, self.imv.getImageItem())
+                        self.MPAmean.setPlainText(str(ROIarray.mean()))
+                        np.fliplr(ROIarray)
+
+                    if not coordsCorrect:
+                        msgBox = QMessageBox()
+                        msgBox.setText("There was an error:")
+                        msgBox.setInformativeText("Ensure that coordinates for ROI are correct and try again.")
+                        msgBox.setStandardButtons(QMessageBox.Ok)
+                        msgBox.setDefaultButton(QMessageBox.Ok)
+                        msgBox.exec_()
+                self.createROI_btn.setDown(False)
+            elif(self.baseROI_btn.isDown()):
+                if self.BASEexists == False:
+                    self.BASEexists = True
+                    self.BASEroi.setParentItem(self.imv.getView())
+                    self.BASEroi.setPen(0, 200, 100)
+                    self.BASEroi.setSize(self.spinBoxROI.value(), self.spinBoxROI.value())
+                    coordsCorrect = True
+                    try:
+                        temp = float(self.xCoordTxt.toPlainText())
+                    except:
+                        coordsCorrect = False
+                    if coordsCorrect:
+                        self.BASEroi.setPos(float(self.xCoordTxt.toPlainText()), float(self.yCoordTxt.toPlainText()))
+                        self.BASEroiSAVE = self.BASEroi.saveState()
+                        self.BASEmean.setPlainText(str(self.BASEroi.getArrayRegion(self.finalArray[self.layerScroll.sliderPosition()][:, :, 0].T, self.imv.getImageItem()).mean()))
+                    if not coordsCorrect:
+                        msgBox = QMessageBox()
+                        msgBox.setText("There was an error:")
+                        msgBox.setInformativeText("Ensure that coordinates for baseline are correct and try again.")
+                        msgBox.setStandardButtons(QMessageBox.Ok)
+                        msgBox.setDefaultButton(QMessageBox.Ok)
+                        msgBox.exec_()
+                self.baseROI_btn.setDown(False)

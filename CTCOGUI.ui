@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>1340</width>
-    <height>771</height>
+    <height>846</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Cardiac Output Calculator</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="PlotWidget" name="imageView">
@@ -110,26 +110,26 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>600</y>
+      <y>590</y>
       <width>91</width>
       <height>32</height>
      </rect>
     </property>
     <property name="text">
-     <string>Create ROI</string>
+     <string>MPA ROI's</string>
     </property>
    </widget>
    <widget class="QPushButton" name="clearROI_btn">
     <property name="geometry">
      <rect>
-      <x>280</x>
-      <y>600</y>
+      <x>30</x>
+      <y>620</y>
       <width>91</width>
       <height>32</height>
      </rect>
     </property>
     <property name="text">
-     <string>Clear ROI</string>
+     <string>Clear MPA</string>
     </property>
    </widget>
    <widget class="QSpinBox" name="spinBoxROI">
@@ -161,14 +161,14 @@
      </rect>
     </property>
     <property name="text">
-     <string>ROI Size</string>
+     <string>ROI Size:</string>
     </property>
    </widget>
    <widget class="QPushButton" name="baseROI_btn">
     <property name="geometry">
      <rect>
-      <x>150</x>
-      <y>600</y>
+      <x>220</x>
+      <y>590</y>
       <width>101</width>
       <height>32</height>
      </rect>
@@ -559,8 +559,8 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>410</x>
-      <y>670</y>
+      <x>420</x>
+      <y>590</y>
       <width>111</width>
       <height>32</height>
      </rect>
@@ -572,9 +572,9 @@
    <widget class="QTableWidget" name="HUvalues">
     <property name="geometry">
      <rect>
-      <x>640</x>
-      <y>0</y>
-      <width>121</width>
+      <x>650</x>
+      <y>10</y>
+      <width>91</width>
       <height>751</height>
      </rect>
     </property>
@@ -656,14 +656,14 @@
    <widget class="QPushButton" name="resetPlot">
     <property name="geometry">
      <rect>
-      <x>764</x>
-      <y>660</y>
+      <x>420</x>
+      <y>620</y>
       <width>93</width>
       <height>32</height>
      </rect>
     </property>
     <property name="text">
-     <string>Reset Plot</string>
+     <string>Reset Data</string>
     </property>
    </widget>
    <widget class="QPlainTextEdit" name="HUtoIodineConversion">
@@ -773,6 +773,65 @@
     </property>
     <property name="text">
      <string>Create a CSV</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="clearBASE_btn">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>620</y>
+      <width>113</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Clear Baseline</string>
+    </property>
+   </widget>
+   <widget class="QTextBrowser" name="MPAmean">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>720</y>
+      <width>101</width>
+      <height>21</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>720</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>MPA ROI mean:</string>
+    </property>
+   </widget>
+   <widget class="QTextBrowser" name="BASEmean">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>750</y>
+      <width>101</width>
+      <height>21</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>750</y>
+      <width>91</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Baseline mean:</string>
     </property>
    </widget>
   </widget>
