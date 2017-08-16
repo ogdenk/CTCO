@@ -84,7 +84,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
 
         self.timeInterval.setPlainText(str(self.timeIntervalfloat))
         s = sorted(masterList, key=lambda x: (x[2]))
-        s = sorted(masterList, key=lambda x: (x[1]))#Sorted by position then by time (maybe)
+        s = sorted(s, key=lambda x: (x[1]))#Sorted by position then by time (maybe)
 
         self.nPos = seenPos.__len__()
         self.nTime = seenTime.__len__()
@@ -100,11 +100,12 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 ArrayDicom[:, :, t] = ds.pixel_array
             self.finalArray.append(ArrayDicom)
 
+        #self.DirSelect.
 
         #ROI creation
         #Coordinate Boxes
-        self.xCoordTxt.setPlainText("-200")
-        self.yCoordTxt.setPlainText("-200")
+        self.xCoordTxt.setPlainText("0")
+        self.yCoordTxt.setPlainText("0")
         #Changes ROI based on GUI inputs
         def resizeROI():
             self.roi.setSize([self.spinBoxROI.value(), self.spinBoxROI.value()])
@@ -144,13 +145,11 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.clearROI_btn.clicked.connect(clearROI)
         self.clearBASE_btn.clicked.connect(clearBASE)
 
-        '''
         def moveBASE():
-            if(self.BASEexists):
+            if(self.BASEexists and self.timeScroll.sliderPosition()==0):
                 self.BASEmean.setPlainText(str(self.BASEroi.getArrayRegion(self.finalArray[self.layerScroll.sliderPosition()][:, :, 0].T, self.imv.getImageItem()).mean()))
 
-        self.BASEroi.sigRegionChanged.connect(moveBASE)
-        '''
+
 
         #Changes data based on moving of ROI as it happens
         def update(roi):
@@ -209,6 +208,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 #nonNumpyMeanlst = meanlst.tolist()#meanlst.astype(type('float', (float,), {}))
                 for i in range(0,meanlst.__len__()):
                     self.HUvalues.setItem(i,0,QTableWidgetItem(str(meanlst[i])))
+                    self.HUvalues.setItem(i,1,QTableWidgetItem(str(float(self.timeInterval.toPlainText())*i)))
             if self.readyToPlot:
                 self.ApplyChecker()
 
@@ -224,7 +224,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         def setBaseLine():
             QApplication.setOverrideCursor(QCursor(QtCore.Qt.CrossCursor))
             self.baseROI_btn.setDown(True)
-
+            self.BASEroi.sigRegionChanged.connect(moveBASE)
 
         self.baseROI_btn.clicked.connect(setBaseLine)
 
@@ -289,7 +289,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         updateBottom()
         self.layerScroll.setSliderPosition((self.nPos-1)/2)
         updateZ()
-        self.imageView.viewRect()
+        #self.imageView.viewRect()
         #######################################################>>>>>>>>>NEW PAST HERE<<<<<<<<###################################################
         ####COCalculator functions####
         self.resetPlot.clicked.connect(self.Reset)
@@ -302,6 +302,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.baseROI_btn.setToolTip("Create Baseline ROI at next mouse click, on first time interval")
         self.resetPlot.setToolTip("Clear plot and data used to create it")
         self.calcAndPlot_btn.setToolTip("Create data from ROIs and plot")
+        self.DirSelect.setToolTip("Select the directory that holds the desired data to change imageset")
 
 
     def ApplyChecker(self, parent = None):
@@ -554,7 +555,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                     # Creates the ROI list
                     self.roi.setParentItem(self.imv.getView())
                     # roi.setPos(100,100)
-                    self.roi.setPen(200, 50, 0)
+                    self.roi.setPen(mkPen('y', width=3, style=QtCore.Qt.DashLine))
                     coordsCorrect = True
                     try:
                         temp = float(self.xCoordTxt.toPlainText())
@@ -582,7 +583,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 if self.BASEexists == False:
                     self.BASEexists = True
                     self.BASEroi.setParentItem(self.imv.getView())
-                    self.BASEroi.setPen(0, 200, 100)
+                    self.BASEroi.setPen(mkPen('c', width=3, style=QtCore.Qt.DashLine))
                     self.BASEroi.setSize(self.spinBoxROI.value(), self.spinBoxROI.value())
                     coordsCorrect = True
                     try:
