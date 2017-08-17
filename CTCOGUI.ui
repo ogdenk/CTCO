@@ -573,7 +573,7 @@
     <property name="geometry">
      <rect>
       <x>640</x>
-      <y>10</y>
+      <y>40</y>
       <width>101</width>
       <height>751</height>
      </rect>
@@ -849,6 +849,19 @@
     </property>
     <property name="text">
      <string>Select Directory</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>650</x>
+      <y>20</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>t (s)       HU</string>
     </property>
    </widget>
   </widget>

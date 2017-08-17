@@ -170,7 +170,7 @@ class Ui_MainWindow(object):
         self.calcAndPlot_btn.setGeometry(QtCore.QRect(420, 590, 111, 32))
         self.calcAndPlot_btn.setObjectName("calcAndPlot_btn")
         self.HUvalues = QtWidgets.QTableWidget(self.centralwidget)
-        self.HUvalues.setGeometry(QtCore.QRect(640, 10, 101, 751))
+        self.HUvalues.setGeometry(QtCore.QRect(640, 40, 101, 751))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -243,6 +243,9 @@ class Ui_MainWindow(object):
         self.DirSelect = QtWidgets.QPushButton(self.centralwidget)
         self.DirSelect.setGeometry(QtCore.QRect(420, 730, 131, 41))
         self.DirSelect.setObjectName("DirSelect")
+        self.label_3 = QtWidgets.QLabel(self.centralwidget)
+        self.label_3.setGeometry(QtCore.QRect(650, 20, 71, 20))
+        self.label_3.setObjectName("label_3")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1340, 22))
@@ -285,5 +288,6 @@ class Ui_MainWindow(object):
         self.label.setText(_translate("MainWindow", "MPA ROI mean:"))
         self.label_2.setText(_translate("MainWindow", "Baseline mean:"))
         self.DirSelect.setText(_translate("MainWindow", "Select Directory"))
+        self.label_3.setText(_translate("MainWindow", "t (s)       HU"))
 
 from pyqtgraph import PlotWidget

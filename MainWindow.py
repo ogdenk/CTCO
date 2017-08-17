@@ -100,7 +100,6 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 ArrayDicom[:, :, t] = ds.pixel_array
             self.finalArray.append(ArrayDicom)
 
-        #self.DirSelect.
 
         #ROI creation
         #Coordinate Boxes
@@ -207,8 +206,8 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 self.imv.setImage(self.finalArray[self.layerScroll.sliderPosition()][:, :, tempPlace].T, autoRange=False,autoLevels=False)
                 #nonNumpyMeanlst = meanlst.tolist()#meanlst.astype(type('float', (float,), {}))
                 for i in range(0,meanlst.__len__()):
-                    self.HUvalues.setItem(i,0,QTableWidgetItem(str(meanlst[i])))
-                    self.HUvalues.setItem(i,1,QTableWidgetItem(str(float(self.timeInterval.toPlainText())*i)))
+                    self.HUvalues.setItem(i,1,QTableWidgetItem(str(meanlst[i])))
+                    self.HUvalues.setItem(i,0,QTableWidgetItem(str(float(self.timeInterval.toPlainText())*i)))
             if self.readyToPlot:
                 self.ApplyChecker()
 
@@ -295,6 +294,81 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.resetPlot.clicked.connect(self.Reset)
         self.createCSV.clicked.connect(self.CSVcreator)
 
+        #Directory choice functionality
+
+        def select():
+            dialog = QFileDialog()
+            dialog.setFileMode(QFileDialog.Directory)
+            dialog.setWindowTitle("Enter Data Path")
+
+            PathDicom = dialog.getExistingDirectory()
+            print(PathDicom)
+            if (PathDicom == "" or PathDicom == None):
+                print("No Directory")
+                sys.exit(1)
+            lstFilesDCM = []  # create an empty list
+            for dirName, subdirList, fileList in os.walk(PathDicom):
+                for filename in fileList:
+                    if ".dcm" in filename.lower():  # check whether the file's DICOM
+                        if (dicom.read_file(os.path.join(dirName, filename))[0x18, 0x1030].value) == "PE Circ Time":
+                            lstFilesDCM.append(os.path.join(dirName, filename))
+
+            ChestCT = dicom.read_file(lstFilesDCM[0])
+
+            # print("rescale intercept \n")
+            # print(ChestCT[0x28,0x1052].value)
+            ConstPixelDims = (int(ChestCT.Rows), int(ChestCT.Columns), len(lstFilesDCM))
+            ConstPixelSpacing = (
+            float(ChestCT.PixelSpacing[0]), float(ChestCT.PixelSpacing[1]), float(ChestCT.SliceThickness))
+            out = ""
+            out += "Pixel Dimentions: " + ConstPixelDims.__str__() + '\n' + "Pixel Spacing: " + ConstPixelSpacing.__str__() + '\n'
+
+            self.accessionNum = dicom.read_file(lstFilesDCM[1])[0x8, 0x50].value
+            seenPos = []  # List to hold possible positions
+            seenTime = []  # List to hold possible times
+            masterList = []  # List to hold data in filename, position, time format
+            for temp in lstFilesDCM:
+                dc = dicom.read_file(temp)
+
+                if seenPos.__contains__(dc[0x20, 0x1041].value):
+                    pass
+                else:
+                    seenPos.append(dc[0x20, 0x1041].value)
+
+                if seenTime.__contains__(dc[0x8, 0x32].value):
+                    pass
+                else:
+                    seenTime.append(dc[0x8, 0x32].value)
+                masterList.append([temp, dc[0x20, 0x1041].value, dc[0x8, 0x32].value])
+            if seenTime.__len__() > 25:
+                self.HUvalues.setRowCount(seenTime.__len__() + 1)
+                self.HUvalues.setVerticalScrollBarPolicy(2)
+            temptime = sorted(seenTime)
+            temp1 = float(temptime[1])
+            temp2 = float(temptime[0])
+            self.timeIntervalfloat = round(temp1 - temp2, 4)
+
+            self.timeInterval.setPlainText(str(self.timeIntervalfloat))
+            s = sorted(masterList, key=lambda x: (x[2]))
+            s = sorted(s, key=lambda x: (x[1]))  # Sorted by position then by time (maybe)
+
+            self.nPos = seenPos.__len__()
+            self.nTime = seenTime.__len__()
+
+            self.finalArray = []  # List holding all Dicom arrays
+            for p in np.arange(0, self.nPos, 1):
+                ArrayDicom = np.zeros(ConstPixelDims, dtype=ChestCT.pixel_array.dtype)
+                for t in np.arange(0, self.nTime, 1):
+                    fileDCM = s[t + p * self.nTime][0]
+                    # read the file
+                    ds = dicom.read_file(fileDCM)
+                    # store the raw image data
+                    ArrayDicom[:, :, t] = ds.pixel_array
+                self.finalArray.append(ArrayDicom)
+            self.imv.setImage(self.finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T, autoRange=False, autoLevels=False)
+
+        self.DirSelect.clicked.connect(select)
+
         #Tooltips
         self.clearBASE_btn.setToolTip("Remove Baseline ROI")
         self.clearROI_btn.setToolTip("Remove MPA ROIs")
@@ -340,7 +414,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             self.clearFocus()
             allRows = self.HUvalues.rowCount()
             for i in np.arange(0, allRows + 1, 1):
-                temp = self.HUvalues.item(i, 0)
+                temp = self.HUvalues.item(i, 1)
                 if temp:
                     a.append(float(temp.text()))
             a = np.array(a)  # type float
@@ -379,9 +453,9 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 allRows = self.HUvalues.rowCount()
                 roiValues = ["ROI Values:"]
                 for i in np.arange(0, allRows + 1, 1):
-                    temp = self.HUvalues.item(i, 0)
+                    temp = self.HUvalues.item(i, 1)
                     if temp:
-                        temp = self.HUvalues.item(i, 0).text()
+                        temp = self.HUvalues.item(i, 1).text()
                         roiValues.append(temp)
                 roiValuesStr = ""
                 for item in roiValues:
@@ -415,7 +489,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.clearFocus()
         allRows = self.HUvalues.rowCount()
         for i in np.arange(0, allRows + 1, 1):
-            temp = self.HUvalues.item(i, 0)
+            temp = self.HUvalues.item(i, 1)
             if temp:
                 a.append(float(temp.text()))
         a = np.array(a)  # type float
