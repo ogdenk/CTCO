@@ -232,6 +232,12 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.timeScroll.setMaximum(self.nTime-1)
         def updateT():
             self.imv.setImage(self.finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T, autoRange=False, autoLevels=False)
+            #self.imageView.scaleToImage(self.imv.getImageItem())
+            #self.imageView.setRange(max)
+            #self.imageView.setAspectLocked(False)
+            #self.imageView.setXRange(min=100,max=562)
+            #self.imageView.setYRange(min=100,max=562)
+            #self.imageView.scale(50,50,center=Point(206,206))
             if self.ROIexists:
                 self.roi.setState(self.roiList[self.timeScroll.sliderPosition()])
                 update(self.roi)
@@ -369,6 +375,22 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
 
         self.DirSelect.clicked.connect(select)
 
+        #Copy data to clipboard
+        def copyClip():
+            clipboard = QApplication.clipboard()
+            text = "Accession Number: \t" + dicom.read_file(lstFilesDCM[0])[0x8, 0x50].value + "\n"
+            text += "Baseline: \t" + self.baselineInput.toPlainText() + "\n"
+            text += "Cardiac Output (L/min): \t" + self.cardiacOutput.toPlainText() + "\n"
+            text += "Standard Error: \t" + self.standardError.toPlainText() + "\n"
+            text += "Time to Peak: \t" + self.peakTime.toPlainText() + "\n"
+            text += "Mean Transit Time (s): \t" + self.MTT.toPlainText() + "\n"
+            text += "HU enhancement: \t"
+            for i in np.arange(0, seenTime.__len__(), 1):
+                text += str(self.HUvalues.item(i, 1).text()) + "\n\t"
+            clipboard.setText(text)
+
+        self.copier.clicked.connect(copyClip)
+
         #Tooltips
         self.clearBASE_btn.setToolTip("Remove Baseline ROI")
         self.clearROI_btn.setToolTip("Remove MPA ROIs")
@@ -377,6 +399,8 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.resetPlot.setToolTip("Clear plot and data used to create it")
         self.calcAndPlot_btn.setToolTip("Create data from ROIs and plot")
         self.DirSelect.setToolTip("Select the directory that holds the desired data to change imageset")
+        self.copier.setToolTip("Copy data read from images to the clipboard")
+        self.createCSV.setToolTip("Create text file in CSV format")
 
 
     def ApplyChecker(self, parent = None):
