@@ -36,13 +36,13 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         dialog.setFileMode(QFileDialog.Directory)
         dialog.setWindowTitle("Enter Data Path")
 
-        PathDicom = dialog.getExistingDirectory()
-        print(PathDicom)
-        if(PathDicom == "" or PathDicom == None):
+        self.PathDicom = dialog.getExistingDirectory()
+        print(self.PathDicom)
+        if(self.PathDicom == "" or self.PathDicom == None):
             print("No Directory")
             sys.exit(1)
         lstFilesDCM = []  # create an empty list
-        for dirName, subdirList, fileList in os.walk(PathDicom):
+        for dirName, subdirList, fileList in os.walk(self.PathDicom):
             for filename in fileList:
                 if ".dcm" in filename.lower():  # check whether the file's DICOM
                     if (dicom.read_file(os.path.join(dirName, filename))[0x18, 0x1030].value) == "PE Circ Time":
@@ -238,6 +238,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             #self.imageView.setXRange(min=100,max=562)
             #self.imageView.setYRange(min=100,max=562)
             #self.imageView.scale(50,50,center=Point(206,206))
+            #self.imv.
             if self.ROIexists:
                 self.roi.setState(self.roiList[self.timeScroll.sliderPosition()])
                 update(self.roi)
@@ -306,12 +307,11 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             dialog = QFileDialog()
             dialog.setFileMode(QFileDialog.Directory)
             dialog.setWindowTitle("Enter Data Path")
-
+            temppath = self.PathDicom
             PathDicom = dialog.getExistingDirectory()
             print(PathDicom)
             if (PathDicom == "" or PathDicom == None):
-                print("No Directory")
-                sys.exit(1)
+                PathDicom = temppath
             lstFilesDCM = []  # create an empty list
             for dirName, subdirList, fileList in os.walk(PathDicom):
                 for filename in fileList:
@@ -545,7 +545,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         # xvalues = xvalues  # + self.patient.shift
         # estimate standard error of CO calculation with monte carlo simulation
         # first calculate residuals & st. dev.
-        resids = np.empty(self.patient.data.size, dtype=float)
+        resids = np.zeros(self.patient.data.size, dtype=float)
         GVvalueDataSet = np.empty(self.patient.data.size, dtype=float)
         for k in np.arange(0, self.patient.data.size, 1):
             # temp3 = self.patient.data.size.item(k)
