@@ -31,75 +31,9 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.setMouseTracking(True)
 
         self.imv = pqg.ImageView(parent=self.imageView)
-        #self.imv.show()
-        dialog = QFileDialog()
-        dialog.setFileMode(QFileDialog.Directory)
-        dialog.setWindowTitle("Enter Data Path")
-
-        self.PathDicom = dialog.getExistingDirectory()
-        print(self.PathDicom)
-        if(self.PathDicom == "" or self.PathDicom == None):
-            print("No Directory")
-            sys.exit(1)
-        lstFilesDCM = []  # create an empty list
-        for dirName, subdirList, fileList in os.walk(self.PathDicom):
-            for filename in fileList:
-                if ".dcm" in filename.lower():  # check whether the file's DICOM
-                    if (dicom.read_file(os.path.join(dirName, filename))[0x18, 0x1030].value) == "PE Circ Time":
-                        lstFilesDCM.append(os.path.join(dirName, filename))
-
-        ChestCT = dicom.read_file(lstFilesDCM[0])
-
-        #print("rescale intercept \n")
-        #print(ChestCT[0x28,0x1052].value)
-        ConstPixelDims = (int(ChestCT.Rows), int(ChestCT.Columns), len(lstFilesDCM))
-        ConstPixelSpacing = (float(ChestCT.PixelSpacing[0]), float(ChestCT.PixelSpacing[1]), float(ChestCT.SliceThickness))
-        out = ""
-        out += "Pixel Dimentions: " + ConstPixelDims.__str__() + '\n' + "Pixel Spacing: " + ConstPixelSpacing.__str__() + '\n'
-
-        self.accessionNum = dicom.read_file(lstFilesDCM[1])[0x8, 0x50].value
-        seenPos = []#List to hold possible positions
-        seenTime = []#List to hold possible times
-        masterList = []#List to hold data in filename, position, time format
-        for temp in lstFilesDCM:
-            dc = dicom.read_file(temp)
-
-            if seenPos.__contains__(dc[0x20, 0x1041].value):
-                pass
-            else:
-                seenPos.append(dc[0x20, 0x1041].value)
-
-            if seenTime.__contains__(dc[0x8, 0x32].value):
-                pass
-            else:
-                seenTime.append(dc[0x8, 0x32].value)
-            masterList.append([temp, dc[0x20, 0x1041].value, dc[0x8, 0x32].value])
-        if seenTime.__len__()>25:
-            self.HUvalues.setRowCount(seenTime.__len__()+1)
-            self.HUvalues.setVerticalScrollBarPolicy(2)
-        temptime = sorted(seenTime)
-        temp1 = float(temptime[1])
-        temp2 = float(temptime[0])
-        self.timeIntervalfloat = round(temp1- temp2,4)
-
-        self.timeInterval.setPlainText(str(self.timeIntervalfloat))
-        s = sorted(masterList, key=lambda x: (x[2]))
-        s = sorted(s, key=lambda x: (x[1]))#Sorted by position then by time (maybe)
-
-        self.nPos = seenPos.__len__()
-        self.nTime = seenTime.__len__()
-
-        self.finalArray = []#List holding all Dicom arrays
-        for p in np.arange(0, self.nPos, 1):
-            ArrayDicom = np.zeros(ConstPixelDims, dtype=ChestCT.pixel_array.dtype)
-            for t in np.arange(0, self.nTime, 1):
-                fileDCM = s[t+p*self.nTime][0]
-                # read the file
-                ds = dicom.read_file(fileDCM)
-                # store the raw image data
-                ArrayDicom[:, :, t] = ds.pixel_array
-            self.finalArray.append(ArrayDicom)
-
+        self.lstFilesDCM = []  # create an empty list
+        self.seenPos = []  # List to hold possible positions
+        self.seenTime = []  # List to hold possible times
 
         #ROI creation
         #Coordinate Boxes
@@ -114,7 +48,6 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.roi = pqg.RectROI([0,0], [self.spinBoxROI.value(), self.spinBoxROI.value()])
         self.roiList = []
         self.ROIexists = False
-
 
         #ROI buttons
         #Creates the ROI by linking the roi to the image
@@ -147,7 +80,6 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         def moveBASE():
             if(self.BASEexists and self.timeScroll.sliderPosition()==0):
                 self.BASEmean.setPlainText(str(self.BASEroi.getArrayRegion(self.finalArray[self.layerScroll.sliderPosition()][:, :, 0].T, self.imv.getImageItem()).mean()))
-
 
 
         #Changes data based on moving of ROI as it happens
@@ -229,16 +161,9 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
 
 
         #Slider for time
-        self.timeScroll.setMaximum(self.nTime-1)
+        #self.timeScroll.setMaximum(self.nTime-1)
         def updateT():
             self.imv.setImage(self.finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T, autoRange=False, autoLevels=False)
-            #self.imageView.scaleToImage(self.imv.getImageItem())
-            #self.imageView.setRange(max)
-            #self.imageView.setAspectLocked(False)
-            #self.imageView.setXRange(min=100,max=562)
-            #self.imageView.setYRange(min=100,max=562)
-            #self.imageView.scale(50,50,center=Point(206,206))
-            #self.imv.
             if self.ROIexists:
                 self.roi.setState(self.roiList[self.timeScroll.sliderPosition()])
                 update(self.roi)
@@ -261,7 +186,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
 
 
         #Slider for Z axis
-        self.layerScroll.setMaximum(self.nPos-1)
+        #self.layerScroll.setMaximum(self.nPos-1)
         def updateZ():
             self.imv.setImage(self.finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T, autoRange=False, autoLevels=False)
             if self.ROIexists:
@@ -293,8 +218,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
         self.brightnessSlider.sliderReleased.connect(updateBottom)
 
         updateBottom()
-        self.layerScroll.setSliderPosition((self.nPos-1)/2)
-        updateZ()
+        #self.layerScroll.setSliderPosition((self.nPos-1)/2)
         #self.imageView.viewRect()
         #######################################################>>>>>>>>>NEW PAST HERE<<<<<<<<###################################################
         ####COCalculator functions####
@@ -307,46 +231,45 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             dialog = QFileDialog()
             dialog.setFileMode(QFileDialog.Directory)
             dialog.setWindowTitle("Enter Data Path")
-            temppath = self.PathDicom
             PathDicom = dialog.getExistingDirectory()
             print(PathDicom)
             if (PathDicom == "" or PathDicom == None):
-                PathDicom = temppath
+                pass
             else:
-                lstFilesDCM = []  # create an empty list
+                self.lstFilesDCM = []  # create an empty list
                 for dirName, subdirList, fileList in os.walk(PathDicom):
                     for filename in fileList:
                         if ".dcm" in filename.lower():  # check whether the file's DICOM
                             if (dicom.read_file(os.path.join(dirName, filename))[0x18, 0x1030].value) == "PE Circ Time":
-                                lstFilesDCM.append(os.path.join(dirName, filename))
+                                self.lstFilesDCM.append(os.path.join(dirName, filename))
 
-                ChestCT = dicom.read_file(lstFilesDCM[0])
+                ChestCT = dicom.read_file(self.lstFilesDCM[0])
 
-                ConstPixelDims = (int(ChestCT.Rows), int(ChestCT.Columns), len(lstFilesDCM))
+                ConstPixelDims = (int(ChestCT.Rows), int(ChestCT.Columns), len(self.lstFilesDCM))
                 ConstPixelSpacing = (
                 float(ChestCT.PixelSpacing[0]), float(ChestCT.PixelSpacing[1]), float(ChestCT.SliceThickness))
                 out = ""
                 out += "Pixel Dimentions: " + ConstPixelDims.__str__() + '\n' + "Pixel Spacing: " + ConstPixelSpacing.__str__() + '\n'
 
-                self.accessionNum = dicom.read_file(lstFilesDCM[1])[0x8, 0x50].value
-                seenPos = []  # List to hold possible positions
-                seenTime = []  # List to hold possible times
+                self.accessionNum = dicom.read_file(self.lstFilesDCM[1])[0x8, 0x50].value
+                self.seenPos = []  # List to hold possible positions
+                self.seenTime = []  # List to hold possible times
                 masterList = []  # List to hold data in filename, position, time format
-                for temp in lstFilesDCM:
+                for temp in self.lstFilesDCM:
                     dc = dicom.read_file(temp)
-                    if seenPos.__contains__(dc[0x20, 0x1041].value):
+                    if self.seenPos.__contains__(dc[0x20, 0x1041].value):
                         pass
                     else:
-                        seenPos.append(dc[0x20, 0x1041].value)
-                    if seenTime.__contains__(dc[0x8, 0x32].value):
+                        self.seenPos.append(dc[0x20, 0x1041].value)
+                    if self.seenTime.__contains__(dc[0x8, 0x32].value):
                         pass
                     else:
-                        seenTime.append(dc[0x8, 0x32].value)
+                        self.seenTime.append(dc[0x8, 0x32].value)
                     masterList.append([temp, dc[0x20, 0x1041].value, dc[0x8, 0x32].value])
-                if seenTime.__len__() > 25:
-                    self.HUvalues.setRowCount(seenTime.__len__() + 1)
+                if self.seenTime.__len__() > 25:
+                    self.HUvalues.setRowCount(self.seenTime.__len__() + 1)
                     self.HUvalues.setVerticalScrollBarPolicy(2)
-                temptime = sorted(seenTime)
+                temptime = sorted(self.seenTime)
                 temp1 = float(temptime[1])
                 temp2 = float(temptime[0])
                 self.timeIntervalfloat = round(temp1 - temp2, 4)
@@ -355,8 +278,8 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 s = sorted(masterList, key=lambda x: (x[2]))
                 s = sorted(s, key=lambda x: (x[1]))  # Sorted by position then by time (maybe)
 
-                self.nPos = seenPos.__len__()
-                self.nTime = seenTime.__len__()
+                self.nPos = self.seenPos.__len__()
+                self.nTime = self.seenTime.__len__()
 
                 self.finalArray = []  # List holding all Dicom arrays
                 for p in np.arange(0, self.nPos, 1):
@@ -375,20 +298,21 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                 self.imv.setImage(self.finalArray[self.layerScroll.sliderPosition()][:, :, self.timeScroll.sliderPosition()].T, autoRange=False, autoLevels=False)
                 self.timeScroll.setMaximum(self.nTime - 1)
                 self.layerScroll.setMaximum(self.nPos - 1)
+                updateZ()
 
         self.DirSelect.clicked.connect(select)
 
         #Copy data to clipboard
         def copyClip():
             clipboard = QApplication.clipboard()
-            text = "Accession Number: \t" + dicom.read_file(lstFilesDCM[0])[0x8, 0x50].value + "\n"
+            text = "Accession Number: \t" + dicom.read_file(self.lstFilesDCM[0])[0x8, 0x50].value + "\n"
             text += "Baseline: \t" + self.baselineInput.toPlainText() + "\n"
             text += "Cardiac Output (L/min): \t" + self.cardiacOutput.toPlainText() + "\n"
             text += "Standard Error: \t" + self.standardError.toPlainText() + "\n"
             text += "Time to Peak: \t" + self.peakTime.toPlainText() + "\n"
             text += "Mean Transit Time (s): \t" + self.MTT.toPlainText() + "\n"
             text += "HU enhancement: \t"
-            for i in np.arange(0, seenTime.__len__(), 1):
+            for i in np.arange(0, self.seenTime.__len__(), 1):
                 text += str(self.HUvalues.item(i, 1).text()) + "\n\t"
             clipboard.setText(text)
 
@@ -464,6 +388,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             msgBox.setStandardButtons(QMessageBox.Ok)
             msgBox.setDefaultButton(QMessageBox.Ok)
             msgBox.exec_()
+
     def CSVcreator(self,parent = None):
 
         filename = ("csvfiles/"+self.accessionNum + "_" + str(datetime.datetime.today()))
