@@ -638,3 +638,5 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
                         msgBox.setDefaultButton(QMessageBox.Ok)
                         msgBox.exec_()
                 self.baseROI_btn.setDown(False)
+
+#py -3.4 -m py2exe.build_exe myscript.py -c --bundle-files 1
