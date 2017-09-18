@@ -586,6 +586,7 @@ class CTCOMain(QMainWindow, ui_CTCO.Ui_MainWindow):
             self.xCoordTxt.setPlainText((((x)-10)-self.spinBoxROI.value()/2).__str__())
             self.yCoordTxt.setPlainText((((y)-10)-self.spinBoxROI.value()/2).__str__())
             if(self.createROI_btn.isDown()):
+                print("T")
                 if self.ROIexists == False:
                     self.ROIexists = True
                     # Creates the ROI list
